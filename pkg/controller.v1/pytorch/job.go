@@ -132,7 +132,6 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 	if oldJobConditionType != common.JobSucceeded && oldJobConditionType != common.JobFailed {
 		pc.enqueuePyTorchJob(cur)
 	}
-	pc.enqueuePyTorchJob(cur)
 
 	// check if need to add a new rsync for ActiveDeadlineSeconds
 	if curPyTorchJob.Status.StartTime != nil {
