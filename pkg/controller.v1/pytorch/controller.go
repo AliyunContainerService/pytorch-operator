@@ -513,7 +513,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 		satisfied = satisfied || pc.Expectations.SatisfiedExpectations(expectationServicesKey)
 	}
 
-	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp != nil {
+	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil {
 		satisfied = false
 	}
 

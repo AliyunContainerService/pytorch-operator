@@ -129,7 +129,7 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 	}
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
-	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp != nil) {
+	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil) {
 		pc.enqueuePyTorchJob(cur)
 	}
 
