@@ -2,6 +2,7 @@ package pytorch
 
 import (
 	"fmt"
+	"github.com/kubeflow/pytorch-operator/pkg/util"
 	"strings"
 	"time"
 
@@ -128,8 +129,7 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 	}
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
-	oldJobConditionType := oldPyTorchJob.Status.Conditions[len(oldPyTorchJob.Status.Conditions)-1].Type
-	if oldJobConditionType != common.JobSucceeded && oldJobConditionType != common.JobFailed && oldPyTorchJob.DeletionTimestamp != nil {
+	if !util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp != nil {
 		pc.enqueuePyTorchJob(cur)
 	}
 

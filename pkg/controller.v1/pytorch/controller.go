@@ -41,6 +41,7 @@ import (
 	jobinformers "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions"
 	jobinformersv1 "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch/v1"
 	joblisters "github.com/kubeflow/pytorch-operator/pkg/client/listers/pytorch/v1"
+	"github.com/kubeflow/pytorch-operator/pkg/util"
 	"github.com/kubeflow/tf-operator/pkg/common/jobcontroller"
 	pylogger "github.com/kubeflow/tf-operator/pkg/logger"
 	"github.com/kubeflow/tf-operator/pkg/util/k8sutil"
@@ -512,8 +513,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 		satisfied = satisfied || pc.Expectations.SatisfiedExpectations(expectationServicesKey)
 	}
 
-	jobConditionType := job.Status.Conditions[len(job.Status.Conditions)-1].Type
-	if (jobConditionType == common.JobSucceeded || jobConditionType == common.JobFailed) && job.DeletionTimestamp != nil {
+	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp != nil {
 		satisfied = false
 	}
 
