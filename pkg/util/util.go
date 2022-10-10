@@ -18,6 +18,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	common "github.com/kubeflow/common/job_controller/api/v1"
 	"math/rand"
 	"time"
 
@@ -71,4 +72,13 @@ func RandString(n int) string {
 	}
 
 	return string(b)
+}
+
+func CheckJobCompleted(conditions []common.JobCondition) bool {
+	for _, condition := range conditions {
+		if condition.Type == common.JobSucceeded || condition.Type == common.JobFailed {
+			return true
+		}
+	}
+	return false
 }

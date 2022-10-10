@@ -41,6 +41,7 @@ import (
 	jobinformers "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions"
 	jobinformersv1 "github.com/kubeflow/pytorch-operator/pkg/client/informers/externalversions/pytorch/v1"
 	joblisters "github.com/kubeflow/pytorch-operator/pkg/client/listers/pytorch/v1"
+	"github.com/kubeflow/pytorch-operator/pkg/util"
 	"github.com/kubeflow/tf-operator/pkg/common/jobcontroller"
 	pylogger "github.com/kubeflow/tf-operator/pkg/logger"
 	"github.com/kubeflow/tf-operator/pkg/util/k8sutil"
@@ -102,14 +103,14 @@ type PyTorchController struct {
 
 // NewPyTorchController returns a new PyTorchJob controller.
 func NewPyTorchController(
-	// This variable is for unstructured informer.
+// This variable is for unstructured informer.
 	jobInformer jobinformersv1.PyTorchJobInformer,
 	kubeClientSet kubeclientset.Interface,
 	kubeBatchClientSet kubebatchclient.Interface,
 	jobClientSet jobclientset.Interface,
 	kubeInformerFactory kubeinformers.SharedInformerFactory,
-	// This field is not used now but we keep it since it will be used
-	// after we support CRD validation.
+// This field is not used now but we keep it since it will be used
+// after we support CRD validation.
 	jobInformerFactory jobinformers.SharedInformerFactory,
 	option options.ServerOption) *PyTorchController {
 
@@ -510,6 +511,10 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 		// Check the expectations of the services.
 		expectationServicesKey := jobcontroller.GenExpectationServicesKey(jobKey, string(rtype))
 		satisfied = satisfied || pc.Expectations.SatisfiedExpectations(expectationServicesKey)
+	}
+
+	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil {
+		satisfied = false
 	}
 
 	return satisfied
