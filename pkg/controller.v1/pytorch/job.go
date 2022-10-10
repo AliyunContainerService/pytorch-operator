@@ -129,7 +129,7 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
 	oldJobConditionType := oldPyTorchJob.Status.Conditions[len(oldPyTorchJob.Status.Conditions)-1].Type
-	if oldJobConditionType != common.JobSucceeded && oldJobConditionType != common.JobFailed {
+	if oldJobConditionType != common.JobSucceeded && oldJobConditionType != common.JobFailed && oldPyTorchJob.DeletionTimestamp != nil {
 		pc.enqueuePyTorchJob(cur)
 	}
 

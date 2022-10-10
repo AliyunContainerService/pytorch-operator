@@ -513,7 +513,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 	}
 
 	jobConditionType := job.Status.Conditions[len(job.Status.Conditions)-1].Type
-	if jobConditionType == common.JobSucceeded || jobConditionType == common.JobFailed {
+	if (jobConditionType == common.JobSucceeded || jobConditionType == common.JobFailed) && job.DeletionTimestamp != nil {
 		satisfied = false
 	}
 
