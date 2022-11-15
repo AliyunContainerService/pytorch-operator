@@ -3,6 +3,7 @@ package pytorch
 import (
 	"fmt"
 	"github.com/kubeflow/pytorch-operator/pkg/util"
+	"reflect"
 	"strings"
 	"time"
 
@@ -129,7 +130,7 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 	}
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
-	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil) {
+	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil && oldPyTorchJob.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone) {
 		pc.enqueuePyTorchJob(cur)
 	}
 
@@ -183,6 +184,16 @@ func (pc *PyTorchController) deletePodsAndServices(job *pyv1.PyTorchJob, pods []
 			return err
 		}
 	}
+
+	jobToUpdate := job.DeepCopy()
+	jobToUpdate.Annotations[PytorchCleanPodStatusLabel] = PytorchCleanStatusDone
+	if !reflect.DeepEqual(job, jobToUpdate) {
+		_, err := pc.jobClientSet.KubeflowV1().PyTorchJobs(jobToUpdate.Namespace).Update(jobToUpdate)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

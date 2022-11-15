@@ -57,6 +57,9 @@ const (
 	replicaIndexLabel   = "pytorch-replica-index"
 	labelGroupName      = "group-name"
 	labelPyTorchJobName = "pytorch-job-name"
+
+	PytorchCleanPodStatusLabel = "arena.kubeflow.org/clean-pod-status"
+	PytorchCleanStatusDone     = "done"
 )
 
 var (
@@ -103,14 +106,14 @@ type PyTorchController struct {
 
 // NewPyTorchController returns a new PyTorchJob controller.
 func NewPyTorchController(
-// This variable is for unstructured informer.
+	// This variable is for unstructured informer.
 	jobInformer jobinformersv1.PyTorchJobInformer,
 	kubeClientSet kubeclientset.Interface,
 	kubeBatchClientSet kubebatchclient.Interface,
 	jobClientSet jobclientset.Interface,
 	kubeInformerFactory kubeinformers.SharedInformerFactory,
-// This field is not used now but we keep it since it will be used
-// after we support CRD validation.
+	// This field is not used now but we keep it since it will be used
+	// after we support CRD validation.
 	jobInformerFactory jobinformers.SharedInformerFactory,
 	option options.ServerOption) *PyTorchController {
 
@@ -513,7 +516,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 		satisfied = satisfied || pc.Expectations.SatisfiedExpectations(expectationServicesKey)
 	}
 
-	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil {
+	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil && job.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone {
 		satisfied = false
 	}
 
