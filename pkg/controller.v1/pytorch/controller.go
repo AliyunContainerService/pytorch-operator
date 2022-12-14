@@ -57,6 +57,7 @@ const (
 	replicaIndexLabel   = "pytorch-replica-index"
 	labelGroupName      = "group-name"
 	labelPyTorchJobName = "pytorch-job-name"
+	suspendInQueue      = "scheduling.x-k8s.io/suspend"
 
 	PytorchCleanPodStatusLabel = "arena.kubeflow.org/clean-pod-status"
 	PytorchCleanStatusDone     = "done"
@@ -260,6 +261,15 @@ func (pc *PyTorchController) processNextWorkItem() bool {
 		}
 
 		return true
+	}
+
+	// Wait until queuing annotation is removed
+	if pytorchJob.Annotations != nil {
+		if suspend, exist := pytorchJob.Annotations[suspendInQueue]; exist && suspend == "true" {
+			infoMsg := fmt.Sprintf("Annotation %s is found, operator will not process until removed", suspendInQueue)
+			logger.Info(infoMsg)
+			return true
+		}
 	}
 
 	// Sync PyTorchJob to mapch the actual state to this desired state.
