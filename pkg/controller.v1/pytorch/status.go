@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
-	pyv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
 	common "github.com/kubeflow/common/job_controller/api/v1"
+	pyv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
 	pylogger "github.com/kubeflow/tf-operator/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -206,6 +206,15 @@ func getCondition(status common.JobStatus, condType common.JobConditionType) *co
 func hasCondition(status common.JobStatus, condType common.JobConditionType) bool {
 	for _, condition := range status.Conditions {
 		if condition.Type == condType && condition.Status == v1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func isSuspend(pytorchJob *pyv1.PyTorchJob) bool {
+	if pytorchJob.Annotations != nil {
+		if suspend, exist := pytorchJob.Annotations[suspendInQueue]; exist && suspend == "true" {
 			return true
 		}
 	}

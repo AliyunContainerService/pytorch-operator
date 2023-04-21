@@ -264,13 +264,11 @@ func (pc *PyTorchController) processNextWorkItem() bool {
 	}
 
 	// Wait until queuing annotation is removed
-	if pytorchJob.Annotations != nil {
-		if suspend, exist := pytorchJob.Annotations[suspendInQueue]; exist && suspend == "true" {
-			infoMsg := fmt.Sprintf("Annotation %s is found, operator will not process until removed", suspendInQueue)
-			logger.Info(infoMsg)
-			return true
-		}
-	}
+	// if isSuspend(pytorchJob) {
+	// 	infoMsg := fmt.Sprintf("Annotation %s is found, operator will not process until removed", suspendInQueue)
+	// 	logger.Info(infoMsg)
+	// 	return true
+	// }
 
 	// Sync PyTorchJob to mapch the actual state to this desired state.
 	forget, err := pc.syncHandler(key)
@@ -373,7 +371,9 @@ func (pc *PyTorchController) reconcilePyTorchJobs(job *pyv1.PyTorchJob) error {
 	}
 
 	// If the PyTorchJob is terminated, delete all pods and services.
-	if isSucceeded(job.Status) || isFailed(job.Status) {
+	if isSucceeded(job.Status) || isFailed(job.Status) || isSuspend(job) {
+		logger.Infof("job %v is inactive(maybe in succeeed, failed or suspend status)", job.Name)
+
 		if err := pc.deletePodsAndServices(job, pods, services); err != nil {
 			return err
 		}
