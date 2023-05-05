@@ -2,10 +2,11 @@ package pytorch
 
 import (
 	"fmt"
-	"github.com/kubeflow/pytorch-operator/pkg/util"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/kubeflow/pytorch-operator/pkg/util"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -159,8 +160,9 @@ func (pc *PyTorchController) deletePodsAndServices(job *pyv1.PyTorchJob, pods []
 		return nil
 	}
 
+	isSuspend := isSuspend(job)
 	// Delete nothing when the cleanPodPolicy is None.
-	if *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone {
+	if *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone && !isSuspend {
 		return nil
 	}
 
