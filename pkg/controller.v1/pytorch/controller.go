@@ -527,7 +527,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 	}
 
 	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil &&
-		job.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone &&
+		(*job.Spec.CleanPodPolicy == common.CleanPodPolicyNone || job.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone) &&
 		job.Spec.TTLSecondsAfterFinished == nil {
 		satisfied = false
 	}

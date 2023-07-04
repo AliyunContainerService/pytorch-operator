@@ -130,7 +130,8 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 	}
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
-	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil && oldPyTorchJob.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone) {
+	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil &&
+		(*oldPyTorchJob.Spec.CleanPodPolicy == common.CleanPodPolicyNone || oldPyTorchJob.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone)) {
 		pc.enqueuePyTorchJob(cur)
 	}
 

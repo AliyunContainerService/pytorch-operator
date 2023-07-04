@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	resyncPeriod     = 30 * time.Second
 	failedMarshalMsg = "Failed to marshal the object to PyTorchJob: %v"
 )
 
@@ -31,7 +30,7 @@ var (
 	errFailedMarshal = fmt.Errorf("failed to marshal the object to PyTorchJob")
 )
 
-func NewUnstructuredPyTorchJobInformer(restConfig *restclientset.Config, namespace string) jobinformersv1.PyTorchJobInformer {
+func NewUnstructuredPyTorchJobInformer(restConfig *restclientset.Config, namespace string, resyncPeriod time.Duration) jobinformersv1.PyTorchJobInformer {
 	dclient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		panic(err)

@@ -75,10 +75,10 @@ func (s *ServerOption) AddFlags(fs *flag.FlagSet) {
 
 	fs.IntVar(&s.MonitoringPort, "monitoring-port", 8443, `Endpoint port for displaying monitoring metrics`)
 
-	fs.DurationVar(&s.ResyncPeriod, "resyc-period", DefaultResyncPeriod, "Resync interval of the tf-operator")
+	fs.DurationVar(&s.ResyncPeriod, "resync-period", DefaultResyncPeriod, "Resync interval of the pytorch-operator")
 
 	fs.StringVar(&s.InitContainerImage, "init-container-image", "alpine:3.10", "The image of the injected init container, will overwrite the value in config")
 
-	fs.IntVar(&s.QPS, "qps", 5, "QPS indicates the maximum QPS to the master from this client.")
-	fs.IntVar(&s.Burst, "burst", 10, "Maximum burst for throttle.")
+	fs.IntVar(&s.QPS, "qps", 10, "QPS indicates the maximum QPS to the master from this client.")
+	fs.IntVar(&s.Burst, "burst", 20, "Maximum burst for throttle.")
 }
