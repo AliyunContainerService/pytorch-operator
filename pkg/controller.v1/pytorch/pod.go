@@ -16,7 +16,6 @@
 package pytorch
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -162,7 +161,6 @@ func (pc *PyTorchController) createNewPod(job *pyv1.PyTorchJob, rtype pyv1.PyTor
 		labels[jobcontroller.JobRoleLabel] = "master"
 	}
 	podTemplate := spec.Template.DeepCopy()
-	totalReplicas := getTotalReplicas(job)
 	// Set name for the template.
 	podTemplate.Name = jobcontroller.GenGeneralName(job.Name, rt, index)
 
@@ -174,7 +172,7 @@ func (pc *PyTorchController) createNewPod(job *pyv1.PyTorchJob, rtype pyv1.PyTor
 		podTemplate.Labels[key] = value
 	}
 
-	if err := setClusterSpec(podTemplate, job, totalReplicas, index, rtype); err != nil {
+	if err := setPodTemplateEnv(podTemplate, job, rtype, index); err != nil {
 		return err
 	}
 
@@ -227,79 +225,6 @@ func (pc *PyTorchController) createNewPod(job *pyv1.PyTorchJob, rtype pyv1.PyTor
 		return nil
 	} else if err != nil {
 		return err
-	}
-	return nil
-}
-
-func setClusterSpec(podTemplateSpec *v1.PodTemplateSpec, job *pyv1.PyTorchJob, totalReplicas int32, index string, rtype pyv1.PyTorchReplicaType) error {
-	rank, err := strconv.Atoi(index)
-	if err != nil {
-		return err
-	}
-
-	masterPort, err := GetPortFromPyTorchJob(job, pyv1.PyTorchReplicaTypeMaster)
-	if err != nil {
-		return err
-	}
-
-	masterAddr := jobcontroller.GenGeneralName(job.Name, strings.ToLower(string(pyv1.PyTorchReplicaTypeMaster)), strconv.Itoa(0))
-	if rtype == pyv1.PyTorchReplicaTypeMaster {
-		if rank != 0 {
-			return errors.New("invalid config: There should be only a single master with index=0")
-		}
-	} else {
-		rank = rank + 1
-	}
-
-	for i := range podTemplateSpec.Spec.Containers {
-		if len(podTemplateSpec.Spec.Containers[i].Env) == 0 {
-			podTemplateSpec.Spec.Containers[i].Env = make([]v1.EnvVar, 0)
-		}
-		masterAddrFound := false
-		masterPortFound := false
-		worldSizeFound := false
-		pythonUnbufferedFound := false
-
-		for _, env := range podTemplateSpec.Spec.Containers[i].Env {
-			switch env.Name {
-			case "MASTER_ADDR":
-				masterAddrFound = true
-			case "MASTER_PORT":
-				masterPortFound = true
-			case "WORLD_SIZE":
-				worldSizeFound = true
-			case "PYTHONUNBUFFERED":
-				pythonUnbufferedFound = true
-			}
-		}
-		if !masterPortFound {
-			podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, v1.EnvVar{
-				Name:  "MASTER_PORT",
-				Value: strconv.Itoa(int(masterPort)),
-			})
-		}
-		if !masterAddrFound {
-			podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, v1.EnvVar{
-				Name:  "MASTER_ADDR",
-				Value: masterAddr,
-			})
-		}
-		if !worldSizeFound {
-			podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, v1.EnvVar{
-				Name:  "WORLD_SIZE",
-				Value: strconv.Itoa(int(totalReplicas)),
-			})
-		}
-		podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, v1.EnvVar{
-			Name:  "RANK",
-			Value: strconv.Itoa(rank),
-		})
-		if !pythonUnbufferedFound {
-			podTemplateSpec.Spec.Containers[i].Env = append(podTemplateSpec.Spec.Containers[i].Env, v1.EnvVar{
-				Name:  "PYTHONUNBUFFERED",
-				Value: "1",
-			})
-		}
 	}
 	return nil
 }

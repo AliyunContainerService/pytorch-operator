@@ -55,7 +55,7 @@ func newPyTorchController(
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, resyncPeriod())
 	jobInformerFactory := jobinformers.NewSharedInformerFactory(jobClientSet, resyncPeriod())
 
-	jobInformer := NewUnstructuredPyTorchJobInformer(config, metav1.NamespaceAll)
+	jobInformer := NewUnstructuredPyTorchJobInformer(config, metav1.NamespaceAll, resyncPeriod())
 
 	ctr := NewPyTorchController(jobInformer, kubeClientSet, kubeBatchClientSet, jobClientSet, kubeInformerFactory, jobInformerFactory, option)
 	ctr.PodControl = &controller.FakePodControl{}

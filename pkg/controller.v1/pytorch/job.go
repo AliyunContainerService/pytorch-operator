@@ -2,10 +2,12 @@ package pytorch
 
 import (
 	"fmt"
-	"github.com/kubeflow/pytorch-operator/pkg/util"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kubeflow/pytorch-operator/pkg/util"
 
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -236,12 +238,51 @@ func (pc *PyTorchController) deletePyTorchJob(job *pyv1.PyTorchJob) error {
 	return pc.jobClientSet.KubeflowV1().PyTorchJobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{})
 }
 
+// getTotalReplicas returns the total number of nodes.
 func getTotalReplicas(job *pyv1.PyTorchJob) int32 {
 	jobReplicas := int32(0)
 	for _, r := range job.Spec.PyTorchReplicaSpecs {
 		jobReplicas += *r.Replicas
 	}
 	return jobReplicas
+}
+
+// getNprocPerNode returns the number of processes of every node.
+func getNprocPerNode(job *pyv1.PyTorchJob) int {
+	nprocPerNode := 1
+	if job.Spec.PyTorchReplicaSpecs == nil {
+		return nprocPerNode
+	}
+
+	masterReplicaSpec := job.Spec.PyTorchReplicaSpecs[pyv1.PyTorchReplicaTypeMaster]
+	if masterReplicaSpec == nil {
+		return nprocPerNode
+	}
+
+	for _, container := range masterReplicaSpec.Template.Spec.Containers {
+		if container.Name != pyv1.DefaultContainerName {
+			continue
+		}
+		for _, env := range container.Env {
+			if env.Name != EnvPetNprocPerNode {
+				continue
+			}
+			val, err := strconv.Atoi(env.Value)
+			if err != nil {
+				log.Infof("Unable to parse \"%s\" as an integer: %v, will use \"%d\" as nprocPerNode", env.Value, err, nprocPerNode)
+				break
+			}
+			nprocPerNode = val
+		}
+	}
+	return nprocPerNode
+}
+
+// getWorldSize returns the total number of processes across all nodes.
+func getWorldSize(job *pyv1.PyTorchJob) int {
+	totalReplicas := int(getTotalReplicas(job))
+	nprocPerNode := getNprocPerNode(job)
+	return totalReplicas * nprocPerNode
 }
 
 func getTotalFailedReplicas(job *pyv1.PyTorchJob) int32 {
