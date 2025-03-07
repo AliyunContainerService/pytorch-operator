@@ -15,8 +15,8 @@ var initContainerTemplate = `
       cpu: 100m
       memory: 20Mi
     requests:
-      cpu: 50m
-      memory: 10Mi
+      cpu: 100m
+      memory: 20Mi
   command: ['sh', '-c', 'until nslookup {{.MasterAddr}}; do echo waiting for master; sleep 2; done;']`
 
 func init() {
