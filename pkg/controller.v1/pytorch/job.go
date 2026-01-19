@@ -189,6 +189,9 @@ func (pc *PyTorchController) deletePodsAndServices(job *pyv1.PyTorchJob, pods []
 	}
 
 	jobToUpdate := job.DeepCopy()
+	if jobToUpdate.Annotations == nil {
+		jobToUpdate.Annotations = map[string]string{}
+	}
 	jobToUpdate.Annotations[PytorchCleanPodStatusLabel] = PytorchCleanStatusDone
 	if !reflect.DeepEqual(job, jobToUpdate) {
 		_, err := pc.jobClientSet.KubeflowV1().PyTorchJobs(jobToUpdate.Namespace).Update(jobToUpdate)
