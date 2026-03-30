@@ -162,8 +162,9 @@ func (pc *PyTorchController) deletePodsAndServices(job *pyv1.PyTorchJob, pods []
 		return nil
 	}
 
+	isSuspend := isSuspend(job)
 	// Delete nothing when the cleanPodPolicy is None.
-	if *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone {
+	if *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone && !isSuspend {
 		return nil
 	}
 
