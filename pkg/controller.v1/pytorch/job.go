@@ -133,7 +133,7 @@ func (pc *PyTorchController) updatePyTorchJob(old, cur interface{}) {
 
 	log.Infof("Updating pytorchjob: %s", oldPyTorchJob.Name)
 	if !(util.CheckJobCompleted(oldPyTorchJob.Status.Conditions) && oldPyTorchJob.DeletionTimestamp == nil &&
-		(*oldPyTorchJob.Spec.CleanPodPolicy == common.CleanPodPolicyNone || oldPyTorchJob.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone)) {
+		(oldPyTorchJob.Spec.CleanPodPolicy == nil || *oldPyTorchJob.Spec.CleanPodPolicy == common.CleanPodPolicyNone || oldPyTorchJob.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone)) {
 		pc.enqueuePyTorchJob(cur)
 	}
 
@@ -162,8 +162,11 @@ func (pc *PyTorchController) deletePodsAndServices(job *pyv1.PyTorchJob, pods []
 		return nil
 	}
 
-	// Delete nothing when the cleanPodPolicy is None.
-	if *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone {
+	// Guard against nil CleanPodPolicy defensively. It is normally defaulted to
+	// CleanPodPolicyNone by scheme.Scheme.Default in syncPyTorchJob before this
+	// method is reached, but any future call path bypassing defaulting would
+	// otherwise panic on the dereference below.
+	if job.Spec.CleanPodPolicy == nil || *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone {
 		return nil
 	}
 
