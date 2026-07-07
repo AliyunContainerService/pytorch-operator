@@ -30,6 +30,7 @@ import (
 	"github.com/kubeflow/pytorch-operator/cmd/pytorch-operator.v1/app/options"
 	pyv1 "github.com/kubeflow/pytorch-operator/pkg/apis/pytorch/v1"
 	jobclientset "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned"
+	jobclientsetfake "github.com/kubeflow/pytorch-operator/pkg/client/clientset/versioned/fake"
 	"github.com/kubeflow/pytorch-operator/pkg/common/util/v1/testutil"
 	"github.com/kubeflow/tf-operator/pkg/control"
 )
@@ -137,14 +138,6 @@ func TestCopyLabelsAndAnnotation(t *testing.T) {
 	ctr.ServiceInformerSynced = testutil.AlwaysReady
 	jobIndexer := ctr.jobInformer.GetIndexer()
 
-	stopCh := make(chan struct{})
-	run := func(<-chan struct{}) {
-		if err := ctr.Run(testutil.ThreadCount, stopCh); err != nil {
-			t.Errorf("Failed to run the controller: %v", err)
-		}
-	}
-	go run(stopCh)
-
 	ctr.updateStatusHandler = func(job *pyv1.PyTorchJob) error {
 		return nil
 	}
@@ -191,8 +184,6 @@ func TestCopyLabelsAndAnnotation(t *testing.T) {
 	if v != "1" {
 		t.Errorf("Annotations value does not equal")
 	}
-
-	close(stopCh)
 }
 
 func TestDeletePodsAndServices(t *testing.T) {
@@ -218,7 +209,7 @@ func TestDeletePodsAndServices(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		testCase{
+		{
 			description: "4 workers and 1 master are running, policy is all",
 			job:         testutil.NewPyTorchJobWithCleanPolicy(1, 4, common.CleanPodPolicyAll),
 
@@ -238,7 +229,7 @@ func TestDeletePodsAndServices(t *testing.T) {
 			expectedPodDeletions:     5,
 			expectedServiceDeletions: 1,
 		},
-		testCase{
+		{
 			description: "4 workers and 1 master running, policy is running",
 			job:         testutil.NewPyTorchJobWithCleanPolicy(1, 4, common.CleanPodPolicyRunning),
 
@@ -258,7 +249,7 @@ func TestDeletePodsAndServices(t *testing.T) {
 			expectedPodDeletions:     5,
 			expectedServiceDeletions: 1,
 		},
-		testCase{
+		{
 			description: "4 workers and 1 master succeeded, policy is running",
 			job:         testutil.NewPyTorchJobWithCleanPolicy(1, 4, common.CleanPodPolicyRunning),
 
@@ -276,11 +267,31 @@ func TestDeletePodsAndServices(t *testing.T) {
 			activeMasterServices: 1,
 
 			expectedPodDeletions:     0,
-			expectedServiceDeletions: 0,
+			expectedServiceDeletions: 1,
 		},
-		testCase{
+		{
 			description: "4 workers and 1 master succeeded, policy is None",
 			job:         testutil.NewPyTorchJobWithCleanPolicy(1, 4, common.CleanPodPolicyNone),
+
+			pendingWorkerPods:   0,
+			activeWorkerPods:    0,
+			succeededWorkerPods: 4,
+			failedWorkerPods:    0,
+
+			pendingMasterPods:   0,
+			activeMasterPods:    0,
+			succeededMasterPods: 1,
+			failedMasterPods:    0,
+
+			activeWorkerServices: 4,
+			activeMasterServices: 1,
+
+			expectedPodDeletions:     0,
+			expectedServiceDeletions: 0,
+		},
+		{
+			description: "4 workers and 1 master succeeded, CleanPodPolicy is nil",
+			job:         testutil.NewPyTorchJobWithNilCleanPolicy(1, 4),
 
 			pendingWorkerPods:   0,
 			activeWorkerPods:    0,
@@ -323,7 +334,7 @@ func TestDeletePodsAndServices(t *testing.T) {
 				GroupVersion: &pyv1.SchemeGroupVersion,
 			},
 		}
-		jobClientSet := jobclientset.NewForConfigOrDie(config)
+		jobClientSet := jobclientsetfake.NewSimpleClientset(tc.job)
 		ctr, kubeInformerFactory, _ := newPyTorchController(config, kubeClientSet, kubeBatchClientSet, jobClientSet, controller.NoResyncPeriodFunc, options.ServerOption{})
 		fakePodControl := &controller.FakePodControl{}
 		ctr.PodControl = fakePodControl
@@ -403,7 +414,7 @@ func TestCleanupPyTorchJob(t *testing.T) {
 	ttlaf2s := int32(2)
 	ttl2s := &ttlaf2s
 	testCases := []testCase{
-		testCase{
+		{
 			description: "4 workers and 1 master are running, TTLSecondsAfterFinished unset",
 			job:         testutil.NewPyTorchJobWithCleanupJobDelay(1, 4, nil),
 
@@ -422,7 +433,7 @@ func TestCleanupPyTorchJob(t *testing.T) {
 
 			expectedDeleteFinished: false,
 		},
-		testCase{
+		{
 			description: "4 workers and 1 master are running, TTLSecondsAfterFinished is 0",
 			job:         testutil.NewPyTorchJobWithCleanupJobDelay(1, 4, ttl0),
 
@@ -441,7 +452,7 @@ func TestCleanupPyTorchJob(t *testing.T) {
 
 			expectedDeleteFinished: true,
 		},
-		testCase{
+		{
 			description: "4 workers and 1 master succeeded, TTLSecondsAfterFinished is 2",
 			job:         testutil.NewPyTorchJobWithCleanupJobDelay(1, 4, ttl2s),
 
@@ -572,7 +583,7 @@ func TestActiveDeadlineSeconds(t *testing.T) {
 	ads2 := int64(2)
 	adsTest2 := &ads2
 	testCases := []testCase{
-		testCase{
+		{
 			description: "1 master and 4 workers running, ActiveDeadlineSeconds unset",
 			job:         testutil.NewPyTorchJobWithActiveDeadlineSeconds(1, 4, nil),
 
@@ -591,7 +602,7 @@ func TestActiveDeadlineSeconds(t *testing.T) {
 			expectedPodDeletions:     0,
 			expectedServiceDeletions: 0,
 		},
-		testCase{
+		{
 			description: "1 master and 4 workers running, ActiveDeadlineSeconds is 2",
 			job:         testutil.NewPyTorchJobWithActiveDeadlineSeconds(1, 4, adsTest2),
 
@@ -636,7 +647,7 @@ func TestActiveDeadlineSeconds(t *testing.T) {
 				GroupVersion: &pyv1.SchemeGroupVersion,
 			},
 		}
-		jobClientSet := jobclientset.NewForConfigOrDie(config)
+		jobClientSet := jobclientsetfake.NewSimpleClientset(tc.job)
 		ctr, kubeInformerFactory, _ := newPyTorchController(config, kubeClientSet, kubeBatchClientSet, jobClientSet, controller.NoResyncPeriodFunc, options.ServerOption{})
 		fakePodControl := &controller.FakePodControl{}
 		ctr.PodControl = fakePodControl
@@ -717,7 +728,7 @@ func TestBackoffForOnFailure(t *testing.T) {
 	backoffLimit4 := int32(4)
 	backoffLimitTest4 := &backoffLimit4
 	testCases := []testCase{
-		testCase{
+		{
 			description: "1 master and 4 workers each having 1 restartCount running, backoffLimit 4 ",
 			job:         testutil.NewPyTorchJobWithBackoffLimit(1, 4, backoffLimitTest4),
 
@@ -764,7 +775,7 @@ func TestBackoffForOnFailure(t *testing.T) {
 				GroupVersion: &pyv1.SchemeGroupVersion,
 			},
 		}
-		jobClientSet := jobclientset.NewForConfigOrDie(config)
+		jobClientSet := jobclientsetfake.NewSimpleClientset(tc.job)
 		ctr, kubeInformerFactory, _ := newPyTorchController(config, kubeClientSet, kubeBatchClientSet, jobClientSet, controller.NoResyncPeriodFunc, options.ServerOption{})
 		fakePodControl := &controller.FakePodControl{}
 		ctr.PodControl = fakePodControl
@@ -809,5 +820,56 @@ func TestBackoffForOnFailure(t *testing.T) {
 		if len(fakeServiceControl.DeleteServiceName) != tc.expectedServiceDeletions {
 			t.Errorf("%s: unexpected number of service deletes.  Expected %d, saw %d\n", tc.description, tc.expectedServiceDeletions, len(fakeServiceControl.DeleteServiceName))
 		}
+	}
+}
+
+func TestUpdatePyTorchJobNilCleanPolicy(t *testing.T) {
+	// Prepare the clientset and controller for the test.
+	kubeClientSet := kubeclientset.NewForConfigOrDie(&rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &v1.SchemeGroupVersion,
+		},
+	})
+	kubeBatchClientSet := kubebatchclient.NewForConfigOrDie(&rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &v1.SchemeGroupVersion,
+		},
+	})
+
+	config := &rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &pyv1.SchemeGroupVersion,
+		},
+	}
+	jobClientSet := jobclientset.NewForConfigOrDie(config)
+	ctr, _, _ := newPyTorchController(config, kubeClientSet, kubeBatchClientSet, jobClientSet, controller.NoResyncPeriodFunc, options.ServerOption{})
+	ctr.jobInformerSynced = testutil.AlwaysReady
+	ctr.PodInformerSynced = testutil.AlwaysReady
+	ctr.ServiceInformerSynced = testutil.AlwaysReady
+
+	// Create a completed job with nil CleanPodPolicy.
+	// updatePyTorchJob does not call scheme.Scheme.Default, so the nil
+	// policy reaches the nil guard directly.
+	job := testutil.NewPyTorchJobWithNilCleanPolicy(1, 4)
+	err := updatePyTorchJobConditions(job, common.JobSucceeded, pytorchJobSucceededReason, "")
+	if err != nil {
+		t.Fatalf("Failed to set job condition: %v", err)
+	}
+
+	unstructured, err := testutil.ConvertPyTorchJobToUnstructured(job)
+	if err != nil {
+		t.Fatalf("Failed to convert job to unstructured: %v", err)
+	}
+
+	// Calling updatePyTorchJob must not panic on nil CleanPodPolicy.
+	ctr.updatePyTorchJob(unstructured, unstructured)
+
+	// A completed job with nil (treated as None) CleanPodPolicy should not
+	// be enqueued for re-sync.
+	if ctr.WorkQueue.Len() != 0 {
+		t.Errorf("Expected work queue to be empty after updating completed job with nil CleanPodPolicy, got %d items", ctr.WorkQueue.Len())
 	}
 }

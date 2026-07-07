@@ -36,6 +36,20 @@ func NewPyTorchJobWithCleanPolicy(master, worker int, policy common.CleanPodPoli
 	return job
 }
 
+// NewPyTorchJobWithNilCleanPolicy creates a PyTorchJob with CleanPodPolicy
+// explicitly set to nil. This simulates a job created by a user who did not
+// specify a clean policy, before scheme defaulting runs.
+func NewPyTorchJobWithNilCleanPolicy(master, worker int) *pyv1.PyTorchJob {
+	if master == 1 {
+		job := NewPyTorchJobWithMaster(worker)
+		job.Spec.CleanPodPolicy = nil
+		return job
+	}
+	job := NewPyTorchJob(worker)
+	job.Spec.CleanPodPolicy = nil
+	return job
+}
+
 func NewPyTorchJobWithCleanupJobDelay(master, worker int, ttl *int32) *pyv1.PyTorchJob {
 	if master == 1 {
 		job := NewPyTorchJobWithMaster(worker)
