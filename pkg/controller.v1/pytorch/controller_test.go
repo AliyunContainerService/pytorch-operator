@@ -350,3 +350,48 @@ func TestRun(t *testing.T) {
 		t.Errorf("Failed to run: %v", err)
 	}
 }
+
+func TestSatisfiedExpectationsNilCleanPolicy(t *testing.T) {
+	// Prepare the clientset and controller for the test.
+	kubeClientSet := kubeclientset.NewForConfigOrDie(&rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &v1.SchemeGroupVersion,
+		},
+	})
+	kubeBatchClientSet := kubebatchclient.NewForConfigOrDie(&rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &v1.SchemeGroupVersion,
+		},
+	})
+
+	config := &rest.Config{
+		Host: "",
+		ContentConfig: rest.ContentConfig{
+			GroupVersion: &pyv1.SchemeGroupVersion,
+		},
+	}
+	jobClientSet := jobclientset.NewForConfigOrDie(config)
+	ctr, _, _ := newPyTorchController(config, kubeClientSet, kubeBatchClientSet, jobClientSet, controller.NoResyncPeriodFunc, options.ServerOption{})
+	ctr.jobInformerSynced = testutil.AlwaysReady
+	ctr.PodInformerSynced = testutil.AlwaysReady
+	ctr.ServiceInformerSynced = testutil.AlwaysReady
+
+	// Create a completed job with nil CleanPodPolicy (no scheme defaulting,
+	// since we call satisfiedExpectations directly, bypassing syncPyTorchJob).
+	job := testutil.NewPyTorchJobWithNilCleanPolicy(1, 4)
+	err := updatePyTorchJobConditions(job, common.JobSucceeded, pytorchJobSucceededReason, "")
+	if err != nil {
+		t.Fatalf("Failed to set job condition: %v", err)
+	}
+
+	// Calling satisfiedExpectations must not panic on nil CleanPodPolicy.
+	result := ctr.satisfiedExpectations(job)
+
+	// A completed job with nil (treated as None) CleanPodPolicy and no TTL
+	// should return false, meaning no re-sync is needed.
+	if result {
+		t.Errorf("Expected satisfiedExpectations to return false for completed job with nil CleanPodPolicy, got true")
+	}
+}

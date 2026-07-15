@@ -333,10 +333,9 @@ func (pc *PyTorchController) syncPyTorchJob(key string) (bool, error) {
 	}
 
 	job := sharedJob.DeepCopy()
-	jobNeedsSync := pc.satisfiedExpectations(job)
-
 	// Set default for the new job.
 	scheme.Scheme.Default(job)
+	jobNeedsSync := pc.satisfiedExpectations(job)
 
 	var reconcilePyTorchJobsErr error
 	if jobNeedsSync && job.DeletionTimestamp == nil {
@@ -536,7 +535,7 @@ func (pc *PyTorchController) satisfiedExpectations(job *pyv1.PyTorchJob) bool {
 	}
 
 	if util.CheckJobCompleted(job.Status.Conditions) && job.DeletionTimestamp == nil &&
-		(*job.Spec.CleanPodPolicy == common.CleanPodPolicyNone || job.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone) &&
+		(job.Spec.CleanPodPolicy == nil || *job.Spec.CleanPodPolicy == common.CleanPodPolicyNone || job.Annotations[PytorchCleanPodStatusLabel] == PytorchCleanStatusDone) &&
 		job.Spec.TTLSecondsAfterFinished == nil {
 		satisfied = false
 	}

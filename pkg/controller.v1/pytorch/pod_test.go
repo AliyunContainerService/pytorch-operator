@@ -189,14 +189,6 @@ func TestExitCode(t *testing.T) {
 	jobIndexer := ctr.jobInformer.GetIndexer()
 	podIndexer := kubeInformerFactory.Core().V1().Pods().Informer().GetIndexer()
 
-	stopCh := make(chan struct{})
-	run := func(<-chan struct{}) {
-		if err := ctr.Run(testutil.ThreadCount, stopCh); err != nil {
-			t.Errorf("Failed to run the controller: %v", err)
-		}
-	}
-	go run(stopCh)
-
 	ctr.updateStatusHandler = func(job *pyv1.PyTorchJob) error {
 		return nil
 	}
@@ -240,5 +232,4 @@ func TestExitCode(t *testing.T) {
 	if !found {
 		t.Errorf("Failed to delete pod %s", pod.Name)
 	}
-	close(stopCh)
 }
