@@ -1,4 +1,4 @@
-// +build linux aix
+//go:build (linux || aix || zos) && !tinygo
 
 package logrus
 
@@ -10,4 +10,3 @@ func isTerminal(fd int) bool {
 	_, err := unix.IoctlGetTermios(fd, ioctlReadTermios)
 	return err == nil
 }
-
