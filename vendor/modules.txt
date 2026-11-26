@@ -1,12 +1,6 @@
 # cloud.google.com/go v0.44.0
 ## explicit; go 1.9
 cloud.google.com/go/compute/metadata
-# github.com/PuerkitoBio/purell v1.1.1
-## explicit
-github.com/PuerkitoBio/purell
-# github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
-## explicit
-github.com/PuerkitoBio/urlesc
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -24,18 +18,41 @@ github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v0.0.0-20190203023257-5858425f7550
 ## explicit
 github.com/evanphx/json-patch
-# github.com/go-openapi/jsonpointer v0.19.2
-## explicit
+# github.com/go-openapi/jsonpointer v1.0.0
+## explicit; go 1.25.0
 github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.19.2
-## explicit
+github.com/go-openapi/jsonpointer/jsonname
+# github.com/go-openapi/jsonreference v1.0.1
+## explicit; go 1.25.0
 github.com/go-openapi/jsonreference
-# github.com/go-openapi/spec v0.19.2
-## explicit
+github.com/go-openapi/jsonreference/internal
+# github.com/go-openapi/spec v1.0.1
+## explicit; go 1.26.0
 github.com/go-openapi/spec
-# github.com/go-openapi/swag v0.19.4
-## explicit
-github.com/go-openapi/swag
+# github.com/go-openapi/swag/conv v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/conv
+# github.com/go-openapi/swag/jsonutils v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/jsonutils
+github.com/go-openapi/swag/jsonutils/adapters
+github.com/go-openapi/swag/jsonutils/adapters/ifaces
+github.com/go-openapi/swag/jsonutils/adapters/stdlib/json
+# github.com/go-openapi/swag/loading v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/loading
+# github.com/go-openapi/swag/pools v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/pools
+# github.com/go-openapi/swag/stringutils v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/stringutils
+# github.com/go-openapi/swag/typeutils v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/typeutils
+# github.com/go-openapi/swag/yamlutils v0.29.1
+## explicit; go 1.25.0
+github.com/go-openapi/swag/yamlutils
 # github.com/gogo/protobuf v1.2.1
 ## explicit
 github.com/gogo/protobuf/proto
@@ -84,6 +101,8 @@ github.com/json-iterator/go
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 ## explicit
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/kr/pretty v0.1.0
+## explicit
 # github.com/kubeflow/common v0.1.0
 ## explicit; go 1.11
 github.com/kubeflow/common/job_controller/api/v1
@@ -105,11 +124,6 @@ github.com/kubernetes-sigs/kube-batch/pkg/client/clientset/versioned/typed/sched
 # github.com/kubernetes-sigs/yaml v1.1.0
 ## explicit
 github.com/kubernetes-sigs/yaml
-# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
-## explicit
-github.com/mailru/easyjson/buffer
-github.com/mailru/easyjson/jlexer
-github.com/mailru/easyjson/jwriter
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 ## explicit
 github.com/matttproud/golang_protobuf_extensions/pbutil
@@ -149,6 +163,9 @@ github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.3
 ## explicit
 github.com/spf13/pflag
+# go.yaml.in/yaml/v3 v3.0.5
+## explicit; go 1.16
+go.yaml.in/yaml/v3
 # golang.org/x/crypto v0.14.0
 ## explicit; go 1.17
 golang.org/x/crypto/ed25519
@@ -183,7 +200,6 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-golang.org/x/text/width
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 ## explicit
 golang.org/x/time/rate
@@ -199,6 +215,8 @@ google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
+# gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
+## explicit
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
